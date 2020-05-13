@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: FlashCards Backend
+
+Resources:
+  PhrasesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: language
+          AttributeType: S
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: language
+          KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
+
+  FlashCardsAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: FlashCards API
+      Description: API to expose phrases to put on flashcards
+      FailOnWarnings: true
+  
+  PhrasesResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref FlashCardsAPI
+      ParentId: !GetAtt FlashCardsAPI.RootResourceId
+      PathPart: phrases
+  
+  GetPhrasesMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: False
+      AuthorizationType: NONE
+      HttpMethod: GET
+      Integration:
+        Type: AWS
+        Credentials: !GetAtt APIGatewayDynamoAccessRole.Arn
+        IntegrationHttpMethod: POST
+        Uri: !Sub "arn:aws:apigateway:${AWS::Region}:dynamodb:action/Query"
+        IntegrationResponses:
+        - StatusCode: 200
+        RequestTemplates:
+          application/json: |
+            {
+              "TableName": "flashcards-backend-tjung-PhrasesTable-1LDDI83ZYVMNX",
+              "KeyConditionExpression": "#lang = :lang",
+              "ExpressionAttributeValues": {
+                ":lang": {
+                    "S": "$input.params('language')"
+                }
+              },
+              "ExpressionAttributeNames": {
+                "#lang": "language"
+                }
+              }
+            }
+      RequestParameters:
+        method.request.querystring.language: true
+      ResourceId: !Ref PhrasesResource
+      RestApiId: !Ref FlashCardsAPI
+      MethodResponses:
+      - StatusCode: 200
+
+
+
+  APIGatewayDynamoAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: APIGatewayDynamoDBReadOnlyAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:List*
+                  - dynamodb:DescribeReservedCapacity*
+                  - dynamodb:DescribeLimits
+                  - dynamodb:DescribeTimeToLive
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource: !GetAtt PhrasesTable.Arn
