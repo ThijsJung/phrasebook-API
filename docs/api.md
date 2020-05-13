@@ -1,5 +1,8 @@
-Request
-GET /api/v1/phrases?language=$language
+
+
+## Get all phrases
+### Request
+`'GET /api/v1/phrases?language=$language'`
 
 The language argument is mandatory.
 
@@ -7,19 +10,19 @@ Example
 GET /api/v1/phrases?language=pl-PL
 
 
-Response
+### Response
 Returns a list of phrase objects for that language.
 
 ```json
 [
     {
         "id": "phrase_id_1",
-        "language": "pl-PL",
-        "phrase": "Jak tam?",
-        "nl-NL": [
+        "language": "nl-NL",
+        "phrase": "Hoe gaat het?",
+        "pl-PL": [
             {
                 "id": "translation_id_1",
-                "text": "Hoe gaat het?",
+                "text": "Jak tam?",
                 "audio": "<url-to-recording.mp3>"
             }
         ],
@@ -30,13 +33,14 @@ Returns a list of phrase objects for that language.
             }
         ]
     },
-    ...
-}
+    // More phrases if available
+]
 ```
 
-Request
+## Get all or specific translations for a given phrase
+### Request
+`POST /api/v1/phrases`
 
-POST /api/v1/phrases
 Body
 ```json
 [
@@ -45,22 +49,22 @@ Body
     },
     {
         "id": "phrase_id_2",
-        "language": "nl-NL"
+        "language": "pl-PL"
     }
 ]
 ```
 
-Response
+### Response
 ```json
 [
     {
         "id": "phrase_id_1",
-        "language": "pl-PL",
-        "phrase": "Jak tam?",
-        "nl-NL": [
+        "language": "nl-NL",
+        "phrase": "Hoe gaat het?",
+        "pl-PL": [
             {
                 "id": "translation_id_1",
-                "text": "Hoe gaat het?",
+                "text": "Jak tam?",
                 "audio": "<url-to-recording.mp3>"
             }
         ],
@@ -73,12 +77,12 @@ Response
     },
     {
     "id": "phrase_id_2",
-    "language": "pl-PL",
-    "phrase": "Idzie dobrze",
-    "nl-NL": [
+    "language": "nl-NL",
+    "phrase": "Het gaat goed",
+    "pl-PL": [
         {
             "id": "translation_id_3",
-            "text": "Het gaat goed",
+            "text": "Idzie dobrze",
             "audio": "<url-to-recording.mp3>"
         }
     ]
